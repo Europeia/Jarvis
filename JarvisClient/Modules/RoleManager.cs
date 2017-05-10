@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,8 +16,9 @@ namespace JarvisClient.Modules
         [Priority(1000)]
         public async Task AddRoleToUser(string role, string user)
         {
+            IGuildUser author = (IGuildUser)Context.Message.Author;
             string okUser = "";
-            if (Context.Message.Author.Username != okUser && !((IGuildUser)Context.User).GuildPermissions.ManageRoles)
+            if (author.Username != okUser && !author.GuildPermissions.ManageRoles)
             {
                 await Context.Channel.SendMessageAsync("**Permission Denied**");
                 return;
@@ -47,6 +48,20 @@ namespace JarvisClient.Modules
                 return;
             }
 
+            List<SocketRole> roles = new List<SocketRole>();
+            var roleIds = author.RoleIds;
+            foreach(ulong roleId in roleIds)
+            {
+                roles.Add(Context.Guild.GetRole(roleId));
+            }
+            int topLevel = roles.OrderBy(r => r.Position).Last().Position;
+
+            if(targetRole.Position >= topLevel)
+            {
+                await ReplyAsync($"**You cannot grant role {targetRole.Name}**");
+                return;
+            }
+
             await targetUser.AddRoleAsync(targetRole);
             await ReplyAsync($"**{displayName} granted {targetRole.Name} role.**");
         }
@@ -55,8 +70,9 @@ namespace JarvisClient.Modules
         [Priority(1000)]
         public async Task RemoveRoleFromUser(string role, string user)
         {
+            IGuildUser author = (IGuildUser)Context.Message.Author;
             string okUser = "";
-            if (Context.Message.Author.Username != okUser && !((IGuildUser)Context.User).GuildPermissions.ManageRoles)
+            if (author.Username != okUser && !author.GuildPermissions.ManageRoles)
             {
                 await Context.Channel.SendMessageAsync("**Permission Denied**");
                 return;
@@ -83,6 +99,20 @@ namespace JarvisClient.Modules
             if (!targetUser.Roles.Any(r => r.Id == targetRole.Id))
             {
                 await ReplyAsync($"**{displayName} does not have role {targetRole.Name}**");
+                return;
+            }
+
+            List<SocketRole> roles = new List<SocketRole>();
+            var roleIds = author.RoleIds;
+            foreach (ulong roleId in roleIds)
+            {
+                roles.Add(Context.Guild.GetRole(roleId));
+            }
+            int topLevel = roles.OrderBy(r => r.Position).Last().Position;
+
+            if (targetRole.Position >= topLevel)
+            {
+                await ReplyAsync($"**You cannot revoke role {targetRole.Name}**");
                 return;
             }
 

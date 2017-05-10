@@ -1,8 +1,9 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace JarvisClient
 {
@@ -16,6 +17,17 @@ namespace JarvisClient
         {
             _client = new DiscordSocketClient();
             string token = "";
+
+            using (StreamReader reader = new StreamReader("jarvisconfig.json"))
+            {
+                token = reader.ReadToEnd();
+            }
+
+            if(string.IsNullOrWhiteSpace(token))
+            {
+                Console.WriteLine("Unable to find token!  Fill in file jarvisconfig.json!");
+                return;
+            }
 
             await _client.LoginAsync(Discord.TokenType.Bot, token);
             await _client.StartAsync();

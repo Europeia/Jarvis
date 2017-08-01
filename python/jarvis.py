@@ -23,5 +23,8 @@ async def on_message(message):
     elif message.content.startswith('!sleep'):
         await asyncio.sleep(5)
         await client.send_message(message.channel, 'Done sleeping')
+    elif message.content.startswith('!quit'):
+        await client.send_message(message.channel,  'Quitting!')
+        quit()
 
 client.run('MzExNTYxMTAxODAyNDcxNDI1.DGFolw.iQ9xZIK_7qLtZyLfX1-qX0ucvT4')

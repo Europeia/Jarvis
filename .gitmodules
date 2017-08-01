@@ -1,0 +1,3 @@
+[submodule "python/Red-DiscordBot"]
+	path = python/Red-DiscordBot
+	url = https://github.com/Twentysix26/Red-DiscordBot.git

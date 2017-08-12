@@ -15,6 +15,17 @@ class AdministrationCommands:
         self.bot.add_command(self.addRoleMgr)
         self.bot.add_command(self.remRoleMgr)
         self.bot.add_command(self.listRoleMgrs)
+        self.bot.add_command(self.adminHelp)
+    
+    @commands.command()
+    @commands.guild_only()
+    async def adminHelp(self, ctx):
+        output = 'Available Commands:\nAdd a user to a Role: !addRole <role> <user>\nRemove a user from a Role: !remRole <role> <user>'
+        if ctx.author.guild_permissions.administrator:
+            output += '\nAdd a Role Manager: !addRoleMgr <role> <user>\nRemove a Role Manager: !remRoleMgr <role> <user>\nList Role Managers: !listRoleMgrs <role>'
+        if self.bot.is_owner(ctx.author):
+            output += "\nShut it all down: !shutdown"
+        await ctx.send(output)
 
     @commands.command()
     @commands.guild_only()

@@ -43,25 +43,48 @@ class ConfigManager:
         self.configData[str(server.id)] = serverData
     
     def addCommander(self,  server: discord.Guild,  role: discord.Role,  member: discord.Member):
-        serverData = self.configData.get(str(server.id))
-        if serverData is not None:
-            roleData = serverData['roleData'].get(str(role.id))
-            if roleData is not None:
-                roleData['commanders'][str(member.id)] = self.__formatMemberName(member)
+        commanderList = self.__getCommanderList(self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id)))
+        if commanderList is not None:
+            commanderList[str(member.id)] = self.__formatMemberName(member)
     
     def remCommander(self,  server: discord.Guild,  role: discord.Role,  member: discord.Member):
         if self.isCommander(server,  role,  member):
-            del self.configData[str(server.id)]['roleData'][str(role.id)][str(member.id)]
+            del self.configData[str(server.id)]['roleData'][str(role.id)]['commanders'][str(member.id)]
+    
+    def listCommanders(self,  server: discord.Guild,  role: discord.Role):
+        output = ''
+        commanderList = self.__getCommanderList(self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id)))
+        for commander in commanderList:
+            output += commanderList[commander] + '\n'
+        return output;
     
     def isCommander(self,  server: discord.Guild,  role: discord.Role,  member: discord.Member):
-        serverData = self.configData.get(str(server.id))
-        if serverData is not None:
-            roleData = serverData['roleData'].get(str(role.id))
-            if roleData is not None:
-                commander = roleData.get(str(member.id))
-                if commander is not None:
-                    return True
+        commander = self.__getCommander(self.__getCommanderList(self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id))), str(member.id))
+        if commander is not None:
+            return True
         return False
+    
+    #Private Model Utility Functions
+    def __getCommander(self, commanderList,  commanderId):
+        if commanderList is not None and len(commanderList) > 0:
+            return commanderList.get(commanderId)
+        return None
+    
+    def __getCommanderList(self, roleData):
+        if roleData is not None:
+            return roleData.get('commanders')
+        return None
+    
+    def __getRole(self, roleList, roleId):
+        if roleList is not None and len(roleList) > 0:
+            return roleList.get(roleId)
+        return None
+    
+    def __getRoleList(self, serverData):
+        if serverData is not None:
+            return serverData.get('roleData')
+        return None
+    
 
     #Utility Functions      
     def __formatMemberName(self,  member: discord.Member):

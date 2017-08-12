@@ -1,0 +1,13 @@
+{
+    "0" : {
+        "name" : "Server1",
+        "roleData" :  {
+            "0" : {
+                "name" : "Role1",
+                "commanders" : {
+                    "0" : "User@#Discriminator"
+                }
+            }
+        }
+    }
+}

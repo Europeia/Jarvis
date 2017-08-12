@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project Jarvis -->
-<!-- Saved: 2017-08-12, 02:52:02 -->
+<!-- Saved: 2017-08-12, 04:44:31 -->
 <!-- Copyright (C) 2017 Chris Taylor,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -23,8 +23,6 @@
   <Interfaces/>
   <Others>
     <Other>data/base_config.json</Other>
-    <Other>data/config.json</Other>
-    <Other>token.txt</Other>
   </Others>
   <MainScript>jarvis.py</MainScript>
   <Vcs>

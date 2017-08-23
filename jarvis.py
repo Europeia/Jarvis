@@ -29,6 +29,7 @@ def updateConfigs():
 @bot.command()
 @commands.is_owner()
 async def shutdown(ctx):
+    await bot.send_message(ctx.message.author, 'Shutting down!')
     bot.logout()
     exit()
 

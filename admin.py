@@ -16,6 +16,7 @@ class AdministrationCommands:
         self.bot.add_command(self.remRoleMgr)
         self.bot.add_command(self.listRoleMgrs)
         self.bot.add_command(self.adminHelp)
+        self.bot.add_command(self.updateConfig)
     
     @commands.command()
     @commands.guild_only()
@@ -131,4 +132,11 @@ class AdministrationCommands:
     async def listRoleMgrs_error(self, ctx, error):
         if isinstance(error,  commands.BadArgument):
             await ctx.send('Invalid Role! Usage: !listRoleMgrs <role>')
-
+            
+    @commands.command()
+    @commands.guild_only()
+    @is_admin()
+    async def updateConfig(self,  ctx):
+        self.configManager.updateServerData(ctx.guild)
+        self.configManager.writeConfig()
+        await ctx.send('Server Data Updated!')

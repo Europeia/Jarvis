@@ -27,6 +27,7 @@ class AdministrationCommands:
     @commands.command()
     @commands.guild_only()
     async def addRole(self, ctx, role: discord.Role, member: discord.Member):
+        """Adds a Role to a user: !addRole <Role> <User>"""
         if not (
             self.configManager.isCommander(ctx.guild, role, ctx.author) or 
             (
@@ -52,6 +53,7 @@ class AdministrationCommands:
     @commands.command()
     @commands.guild_only()
     async def remRole(self, ctx, role: discord.Role, member: discord.Member):
+        """Removes a Role from a user: !remRole <Role> <User>"""
         if not (
             self.configManager.isCommander(ctx.guild, role, ctx.author) or 
             (
@@ -83,6 +85,7 @@ class AdministrationCommands:
     @commands.guild_only()
     @is_admin()
     async def addRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
+        """Adds a RoleManager to a Role: !addRoleMgr <Role> <User>"""
         self.configManager.addCommander(ctx.guild, role, member);
         self.configManager.writeConfig()
         await ctx.send(member.name + ' can now add users to ' + role.name)
@@ -101,6 +104,7 @@ class AdministrationCommands:
     @commands.guild_only()
     @is_admin()
     async def remRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
+        """Removes a RoleManager from a Role: !remRoleMgr <Role> <User>"""
         self.configManager.remCommander(ctx.guild, role, member);
         self.configManager.writeConfig()
         await ctx.send(member.name + ' can no longer add users to ' + role.name)
@@ -119,6 +123,7 @@ class AdministrationCommands:
     @commands.guild_only()
     @is_admin()
     async def listRoleMgrs(self, ctx, role: discord.Role):
+        """Lists RoleManagers for a Role: !listRoleMgrs <role>"""
         commanders = self.configManager.listCommanders(ctx.guild, role)
         if len(commanders) < 1:
             commanders = 'None'
@@ -133,6 +138,7 @@ class AdministrationCommands:
     @commands.guild_only()
     @is_admin()
     async def updateConfig(self,  ctx):
+        """Persists Config Data to Disk (performed automatically on shutdown)"""
         self.configManager.updateServerData(ctx.guild)
         self.configManager.writeConfig()
         await ctx.send('Server Data Updated!')

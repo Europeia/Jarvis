@@ -29,18 +29,21 @@ class ConfigManager:
     def __updateRolesData(self,  server: discord.Guild):
         serverData = self.configData[str(server.id)]
         serverData['roleData'] = serverData['roleData'] if serverData.get('roleData') is not None else {}
+        newServerData = {}
+        newServerData['roleData'] = {}
         for iRole in range(len(server.roles)):
             role = server.roles[iRole]
             if not role.is_default():
                 roleData = serverData['roleData'][str(role.id)] if serverData['roleData'].get(str(role.id)) is not None else {}
-                roleData['name'] = role.name
-                roleData['commanders'] = roleData['commanders'] if roleData.get('commanders') is not None else {}
-                for memberId in roleData['commanders']:
+                newRoleData = {}
+                newRoleData['name'] = role.name
+                newRoleData['commanders'] = roleData['commanders'] if roleData.get('commanders') is not None else {}
+                for memberId in newRoleData['commanders']:
                     member = server.get_member(int(memberId))
                     if member is not None:
-                        roleData['commanders'][memberId] = self.__formatMemberName(member)
-                serverData['roleData'][str(role.id)] = roleData
-        self.configData[str(server.id)] = serverData
+                        newRoleData['commanders'][memberId] = self.__formatMemberName(member)
+                newServerData['roleData'][str(role.id)] = newRoleData
+        self.configData[str(server.id)] = newServerData
     
     def addCommander(self,  server: discord.Guild,  role: discord.Role,  member: discord.Member):
         commanderList = self.__getCommanderList(self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id)))

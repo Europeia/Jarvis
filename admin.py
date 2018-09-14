@@ -3,35 +3,39 @@ from discord.ext import commands
 
 from config import ConfigManager
 
+
 class AdministrationCommands:
     bot = None
     configManager = None
-   
+
     def __init__(self, bot, configMgr: ConfigManager):
         self.bot = bot
         self.configManager = configMgr
-        if self.addRole not in self.bot.commands :
+        if self.addRole not in self.bot.commands:
             self.bot.add_command(self.addRole)
-        if self.remRole not in self.bot.commands :
+        if self.remRole not in self.bot.commands:
             self.bot.add_command(self.remRole)
-        if self.addRoleMgr not in self.bot.commands :
+        if self.addRoleMgr not in self.bot.commands:
             self.bot.add_command(self.addRoleMgr)
-        if self.remRoleMgr not in self.bot.commands :
+        if self.remRoleMgr not in self.bot.commands:
             self.bot.add_command(self.remRoleMgr)
-        if self.listRoleMgrs not in self.bot.commands :
+        if self.listRoleMgrs not in self.bot.commands:
             self.bot.add_command(self.listRoleMgrs)
-        if self.updateConfig not in self.bot.commands :
+        if self.updateConfig not in self.bot.commands:
             self.bot.add_command(self.updateConfig)
-
+        if self.setGreetingMessage not in self.bot.commands:
+            self.bot.add_command(self.setGreetingMessage)
+        if self.getGreetingMessage not in self.bot.commands:
+            self.bot.add_command(self.getGreetingMessage)
 
     @commands.command()
     @commands.guild_only()
     async def addRole(self, ctx, role: discord.Role, member: discord.Member):
         """Adds a Role to a user: !addRole <Role> <User>"""
         if not (
-            self.configManager.isCommander(ctx.guild, role, ctx.author) or 
+            self.configManager.isCommander(ctx.guild, role, ctx.author) or
             (
-                ctx.author.guild_permissions.manage_roles and 
+                ctx.author.guild_permissions.manage_roles and
                 ctx.author.top_role.position >= role.position
             )
         ):
@@ -55,9 +59,9 @@ class AdministrationCommands:
     async def remRole(self, ctx, role: discord.Role, member: discord.Member):
         """Removes a Role from a user: !remRole <Role> <User>"""
         if not (
-            self.configManager.isCommander(ctx.guild, role, ctx.author) or 
+            self.configManager.isCommander(ctx.guild, role, ctx.author) or
             (
-                ctx.author.guild_permissions.manage_roles and 
+                ctx.author.guild_permissions.manage_roles and
                 ctx.author.top_role.position >= role.position
             )
         ):
@@ -75,18 +79,18 @@ class AdministrationCommands:
             if 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !remRole <role> <user>')
                 return
-    
+
     def is_admin():
         async def predicate(ctx):
             return ctx.author.guild_permissions.administrator
         return commands.check(predicate)
-    
+
     @commands.command()
     @commands.guild_only()
     @is_admin()
     async def addRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
         """Adds a RoleManager to a Role: !addRoleMgr <Role> <User>"""
-        self.configManager.addCommander(ctx.guild, role, member);
+        self.configManager.addCommander(ctx.guild, role, member)
         self.configManager.writeConfig()
         await ctx.send(member.name + ' can now add users to ' + role.name)
 
@@ -99,13 +103,13 @@ class AdministrationCommands:
             if 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !addRoleMgr <role> <user>')
                 return
-    
+
     @commands.command()
     @commands.guild_only()
     @is_admin()
     async def remRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
         """Removes a RoleManager from a Role: !remRoleMgr <Role> <User>"""
-        self.configManager.remCommander(ctx.guild, role, member);
+        self.configManager.remCommander(ctx.guild, role, member)
         self.configManager.writeConfig()
         await ctx.send(member.name + ' can no longer add users to ' + role.name)
 
@@ -118,7 +122,7 @@ class AdministrationCommands:
             if 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !remRoleMgr <role> <user>')
                 return
-    
+
     @commands.command()
     @commands.guild_only()
     @is_admin()
@@ -128,12 +132,27 @@ class AdministrationCommands:
         if len(commanders) < 1:
             commanders = 'None'
         await ctx.send('Managers for @' + role.name + ":\n" + commanders)
-    
+
     @listRoleMgrs.error
     async def listRoleMgrs_error(self, ctx, error):
         if isinstance(error,  commands.BadArgument):
             await ctx.send('Invalid Role! Usage: !listRoleMgrs <role>')
-            
+
+    @commands.command()
+    @commands.guild_only()
+    @is_admin()
+    async def setGreetingMessage(self, ctx, *, greetingMessage: str):
+        """Sets the Greeting Message sent to all new members of the Server (set to 'none' to disable)"""
+        self.configManager.setGreetingMessage(ctx.guild,  greetingMessage)
+        await ctx.send('New Greeting Message Set!')
+
+    @commands.command()
+    @commands.guild_only()
+    @is_admin()
+    async def getGreetingMessage(self,  ctx):
+        """Shows the Greeting Message sent to all new members of the server (if 'none' no message will be sent)"""
+        await ctx.send(self.configManager.getGreetingMessage(ctx.guild))
+
     @commands.command()
     @commands.guild_only()
     @is_admin()

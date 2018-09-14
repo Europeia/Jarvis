@@ -40,6 +40,7 @@ class ConfigManager:
                     str(role.id)) is not None else {}
                 newRoleData = {}
                 newRoleData['name'] = role.name
+                newRoleData['canJoin'] = roleData['canJoin'] if roleData.get('canJoin') is not None else False
                 newRoleData['commanders'] = roleData['commanders'] if roleData.get(
                     'commanders') is not None else {}
                 for memberId in newRoleData['commanders']:
@@ -76,13 +77,22 @@ class ConfigManager:
             return True
         return False
 
-    def setGreetingMessage(self,  server: discord.Guild,  greetingMessage):
+    def setGreetingMessage(self,  server: discord.Guild,  greetingMessage: str):
         self.configData[str(server.id)]['greetingMessage'] = greetingMessage
 
     def getGreetingMessage(self,  server: discord.Guild):
         if self.configData[str(server.id)].get('greetingMessage') is not None:
             return self.configData[str(server.id)]['greetingMessage']
         return 'none'
+
+    def setJoinableRole(self, server:discord.Guild, role: discord.Role, joinable:bool):
+        self.configData[str(server.id)]['roleData'][str(role.id)]['canJoin'] = joinable
+
+    def isJoinableRole(self, server: discord.Guild, role: discord.Role):
+        roleData = self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id))
+        if roleData is not None:
+            return roleData['canJoin'] if roleData['canJoin'] is not None else False
+        return False
 
     # Private Model Utility Functions
     def __getCommander(self, commanderList,  commanderId):

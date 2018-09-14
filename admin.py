@@ -11,22 +11,23 @@ class AdministrationCommands:
     def __init__(self, bot, configMgr: ConfigManager):
         self.bot = bot
         self.configManager = configMgr
-        if self.addRole not in self.bot.commands:
-            self.bot.add_command(self.addRole)
-        if self.remRole not in self.bot.commands:
-            self.bot.add_command(self.remRole)
-        if self.addRoleMgr not in self.bot.commands:
-            self.bot.add_command(self.addRoleMgr)
-        if self.remRoleMgr not in self.bot.commands:
-            self.bot.add_command(self.remRoleMgr)
-        if self.listRoleMgrs not in self.bot.commands:
-            self.bot.add_command(self.listRoleMgrs)
-        if self.updateConfig not in self.bot.commands:
-            self.bot.add_command(self.updateConfig)
-        if self.setGreetingMessage not in self.bot.commands:
-            self.bot.add_command(self.setGreetingMessage)
-        if self.getGreetingMessage not in self.bot.commands:
-            self.bot.add_command(self.getGreetingMessage)
+
+        commands = list()
+        commands.append(self.addRole)
+        commands.append(self.joinRole)
+        commands.append(self.remRole)
+        commands.append(self.leaveRole)
+        commands.append(self.addRoleMgr)
+        commands.append(self.remRoleMgr)
+        commands.append(self.toggleJoinableRole)
+        commands.append(self.listRoleData)
+        commands.append(self.getGreetingMessage)
+        commands.append(self.setGreetingMessage)
+        commands.append(self.updateConfig)
+
+        for iCmd in commands:
+            if iCmd not in self.bot.commands:
+                self.bot.add_command(iCmd)
 
     @commands.command()
     @commands.guild_only()
@@ -56,6 +57,23 @@ class AdministrationCommands:
 
     @commands.command()
     @commands.guild_only()
+    async def joinRole(self, ctx, role: discord.Role):
+        """Joins a Joinable Role: !joinRole <role>"""
+        if not self.configManager.isJoinableRole(ctx.guild, role):
+            await ctx.send('@' + role.name + ' isn\'t joinable.')
+            return
+        await ctx.author.add_roles(role, reason='Adding to Joinable Role by ' + ctx.author.name)
+        await ctx.send('Joined @' + role.name)
+    
+    @joinRole.error
+    async def joinRole_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            if 'Role ' in error.args[0]:
+                await ctx.send('Invalid Role! Usage: !joinRole <role>')
+                return
+    
+    @commands.command()
+    @commands.guild_only()
     async def remRole(self, ctx, role: discord.Role, member: discord.Member):
         """Removes a Role from a user: !remRole <Role> <User>"""
         if not (
@@ -67,7 +85,7 @@ class AdministrationCommands:
         ):
             await ctx.send("You don't have permission to add users to roles!")
             return
-        await member.add_roles(role, reason='Removed by ' + ctx.author.name)
+        await member.remove_roles(role, reason='Removed by ' + ctx.author.name)
         await ctx.send('Removed ' + member.name + ' from @' + role.name)
 
     @remRole.error
@@ -78,6 +96,23 @@ class AdministrationCommands:
                 return
             if 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !remRole <role> <user>')
+                return
+
+    @commands.command()
+    @commands.guild_only()
+    async def leaveRole(self, ctx, role: discord.Role):
+        """Leaves a Joinable Role: !leaveRole <role>"""
+        if not self.configManager.isJoinableRole(ctx.guild, role):
+            await ctx.send('@' + role.name + ' isn\'t joinable.')
+            return
+        await ctx.author.add_roles(role, reason='Leaving a Joinable Role by ' + ctx.author.name)
+        await ctx.send('Left @' + role.name)
+    
+    @leaveRole.error
+    async def leaveRole_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            if 'Role ' in error.args[0]:
+                await ctx.send('Invalid Role! Usage: !leaveRole <role>')
                 return
 
     def is_admin():
@@ -126,17 +161,36 @@ class AdministrationCommands:
     @commands.command()
     @commands.guild_only()
     @is_admin()
-    async def listRoleMgrs(self, ctx, role: discord.Role):
-        """Lists RoleManagers for a Role: !listRoleMgrs <role>"""
+    async def listRoleData(self, ctx, role: discord.Role):
+        """Lists Role Data for a Role: !listRoleData <role>"""
+        output = 'Config Data for Role - ' + role.name + ' : ' + str(role.id) + '\n'
+        output += 'Joinable Group: ' + str(self.configManager.isJoinableRole(ctx.guild, role)) + '\n'
+        
         commanders = self.configManager.listCommanders(ctx.guild, role)
         if len(commanders) < 1:
             commanders = 'None'
-        await ctx.send('Managers for @' + role.name + ":\n" + commanders)
+        output += 'Managers for @' + role.name + ':\n' + commanders
+        
+        await ctx.send(output)
 
-    @listRoleMgrs.error
-    async def listRoleMgrs_error(self, ctx, error):
+    @listRoleData.error
+    async def listRoleData_error(self, ctx, error):
         if isinstance(error,  commands.BadArgument):
-            await ctx.send('Invalid Role! Usage: !listRoleMgrs <role>')
+            await ctx.send('Invalid Role! Usage: !listRoleData <role>')
+    
+    @commands.command()
+    @commands.guild_only()
+    @is_admin()
+    async def toggleJoinableRole(self, ctx, role: discord.Role):
+        """Makes a role Joinable by any user"""
+        joinable = self.configManager.isJoinableRole(ctx.guild, role)
+        self.configManager.setJoinableRole(ctx.guild, role, not joinable)
+        await ctx.send('Joinable Group for @' + role.name + ' set to ' + str(not joinable))
+    
+    @toggleJoinableRole.error
+    async def toggleJoinableRole_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid Role! Usage: !toggleJoinablerole <role>')
 
     @commands.command()
     @commands.guild_only()

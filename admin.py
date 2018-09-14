@@ -3,7 +3,6 @@ from discord.ext import commands
 
 from config import ConfigManager
 
-
 class AdministrationCommands:
     bot = None
     configManager = None
@@ -17,6 +16,7 @@ class AdministrationCommands:
         commands.append(self.joinRole)
         commands.append(self.remRole)
         commands.append(self.leaveRole)
+        commands.append(self.listJoinableRoles)
         commands.append(self.addRoleMgr)
         commands.append(self.remRoleMgr)
         commands.append(self.toggleJoinableRole)
@@ -114,6 +114,25 @@ class AdministrationCommands:
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !leaveRole <role>')
                 return
+    
+    @commands.command()
+    @commands.guild_only()
+    async def listJoinableRoles(self, ctx):
+        """Lists all Joinable roles: !listJoinableRoles"""
+        joinableRoles = self.configManager.getJoinableRoles(ctx.guild)
+        output = 'Joinable Roles:\n'
+        if len(joinableRoles) == 0:
+            output += 'None'
+        else:
+            for roleId in joinableRoles:
+                role = None
+                for guildRole in ctx.guild.roles:
+                    if guildRole.id == int(roleId):
+                        role = guildRole
+                        break
+                if role is not None:
+                    output += role.name + '\n'
+        await ctx.send(output)
 
     def is_admin():
         async def predicate(ctx):

@@ -93,6 +93,16 @@ class ConfigManager:
         if roleData is not None:
             return roleData['canJoin'] if roleData['canJoin'] is not None else False
         return False
+    
+    def getJoinableRoles(self, server:discord.Guild):
+        rolesData = self.__getRoleList(self.configData.get(str(server.id)))
+        goodRoles = list()
+        if rolesData is not None:
+            for roleNum in rolesData.keys():
+                role = rolesData[roleNum]
+                if role['canJoin'] == True:
+                    goodRoles.append(roleNum)
+        return goodRoles
 
     # Private Model Utility Functions
     def __getCommander(self, commanderList,  commanderId):

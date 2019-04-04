@@ -105,7 +105,7 @@ class AdministrationCommands:
         if not self.configManager.isJoinableRole(ctx.guild, role):
             await ctx.send('@' + role.name + ' isn\'t joinable.')
             return
-        await ctx.author.add_roles(role, reason='Leaving a Joinable Role by ' + ctx.author.name)
+        await ctx.author.remove_roles(role, reason='Leaving a Joinable Role by ' + ctx.author.name)
         await ctx.send('Left @' + role.name)
     
     @leaveRole.error

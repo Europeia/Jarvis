@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from config import ConfigManager
 
+
 class AdministrationCommands:
     bot = None
     configManager = None
@@ -64,14 +65,14 @@ class AdministrationCommands:
             return
         await ctx.author.add_roles(role, reason='Adding to Joinable Role by ' + ctx.author.name)
         await ctx.send('Joined @' + role.name)
-    
+
     @joinRole.error
     async def joinRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !joinRole <role>')
                 return
-    
+
     @commands.command()
     @commands.guild_only()
     async def remRole(self, ctx, role: discord.Role, member: discord.Member):
@@ -107,14 +108,14 @@ class AdministrationCommands:
             return
         await ctx.author.remove_roles(role, reason='Leaving a Joinable Role by ' + ctx.author.name)
         await ctx.send('Left @' + role.name)
-    
+
     @leaveRole.error
     async def leaveRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !leaveRole <role>')
                 return
-    
+
     @commands.command()
     @commands.guild_only()
     async def listJoinableRoles(self, ctx):
@@ -182,21 +183,23 @@ class AdministrationCommands:
     @is_admin()
     async def listRoleData(self, ctx, role: discord.Role):
         """Lists Role Data for a Role: !listRoleData <role>"""
-        output = 'Config Data for Role - ' + role.name + ' : ' + str(role.id) + '\n'
-        output += 'Joinable Group: ' + str(self.configManager.isJoinableRole(ctx.guild, role)) + '\n'
-        
+        output = 'Config Data for Role - ' + \
+            role.name + ' : ' + str(role.id) + '\n'
+        output += 'Joinable Group: ' + \
+            str(self.configManager.isJoinableRole(ctx.guild, role)) + '\n'
+
         commanders = self.configManager.listCommanders(ctx.guild, role)
         if len(commanders) < 1:
             commanders = 'None'
         output += 'Managers for @' + role.name + ':\n' + commanders
-        
+
         await ctx.send(output)
 
     @listRoleData.error
     async def listRoleData_error(self, ctx, error):
         if isinstance(error,  commands.BadArgument):
             await ctx.send('Invalid Role! Usage: !listRoleData <role>')
-    
+
     @commands.command()
     @commands.guild_only()
     @is_admin()
@@ -205,7 +208,7 @@ class AdministrationCommands:
         joinable = self.configManager.isJoinableRole(ctx.guild, role)
         self.configManager.setJoinableRole(ctx.guild, role, not joinable)
         await ctx.send('Joinable Group for @' + role.name + ' set to ' + str(not joinable))
-    
+
     @toggleJoinableRole.error
     async def toggleJoinableRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):

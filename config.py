@@ -25,6 +25,7 @@ class ConfigManager:
         serverData = self.configData[str(server.id)] if self.configData.get(
             str(server.id)) is not None else {}
         serverData['name'] = server.name
+        serverData['gateData'] = self.getGateData(server)
         self.configData[str(server.id)] = serverData
         self.__updateRolesData(server)
 
@@ -40,7 +41,8 @@ class ConfigManager:
                     str(role.id)) is not None else {}
                 newRoleData = {}
                 newRoleData['name'] = role.name
-                newRoleData['canJoin'] = roleData['canJoin'] if roleData.get('canJoin') is not None else False
+                newRoleData['canJoin'] = roleData['canJoin'] if roleData.get(
+                    'canJoin') is not None else False
                 newRoleData['commanders'] = roleData['commanders'] if roleData.get(
                     'commanders') is not None else {}
                 for memberId in newRoleData['commanders']:
@@ -51,6 +53,7 @@ class ConfigManager:
                 newRolesData[str(role.id)] = newRoleData
         self.configData[str(server.id)]['roleData'] = newRolesData
 
+    # Commanders
     def addCommander(self,  server: discord.Guild,  role: discord.Role,  member: discord.Member):
         commanderList = self.__getCommanderList(self.__getRole(
             self.__getRoleList(self.configData.get(str(server.id))), str(role.id)))
@@ -77,6 +80,7 @@ class ConfigManager:
             return True
         return False
 
+    # Greetings
     def setGreetingMessage(self,  server: discord.Guild,  greetingMessage: str):
         self.configData[str(server.id)]['greetingMessage'] = greetingMessage
 
@@ -85,16 +89,19 @@ class ConfigManager:
             return self.configData[str(server.id)]['greetingMessage']
         return 'none'
 
-    def setJoinableRole(self, server:discord.Guild, role: discord.Role, joinable:bool):
-        self.configData[str(server.id)]['roleData'][str(role.id)]['canJoin'] = joinable
+    # Joinable Roles
+    def setJoinableRole(self, server: discord.Guild, role: discord.Role, joinable: bool):
+        self.configData[str(server.id)]['roleData'][str(
+            role.id)]['canJoin'] = joinable
 
     def isJoinableRole(self, server: discord.Guild, role: discord.Role):
-        roleData = self.__getRole(self.__getRoleList(self.configData.get(str(server.id))), str(role.id))
+        roleData = self.__getRole(self.__getRoleList(
+            self.configData.get(str(server.id))), str(role.id))
         if roleData is not None:
             return roleData['canJoin'] if roleData['canJoin'] is not None else False
         return False
-    
-    def getJoinableRoles(self, server:discord.Guild):
+
+    def getJoinableRoles(self, server: discord.Guild):
         rolesData = self.__getRoleList(self.configData.get(str(server.id)))
         goodRoles = list()
         if rolesData is not None:
@@ -104,7 +111,34 @@ class ConfigManager:
                     goodRoles.append(roleNum)
         return goodRoles
 
+    # Server Gating
+    def getGateData(self, server: discord.Guild):
+        gateData = self.__getGateData(self.configData.get(str(server.id)))
+
+        newGateData = {}
+        newGateData['gateEnabled'] = False
+        newGateData['allowRejoin'] = False
+        newGateData['keyRoleId'] = ''
+        newGateData['keyedUsers'] = {}
+
+        gateData = gateData if gateData is not None else newGateData
+        return gateData
+
+    def setGateData(self, server: discord.Guild, gateEnabled: bool, allowRejoin: bool, keyRoleId: str, keyedUsers: {}):
+        newGateData = {}
+        newGateData['gateEnabled'] = gateEnabled
+        newGateData['allowRejoin'] = allowRejoin
+        newGateData['keyRoleId'] = keyRoleId
+        newGateData['keyedUsers'] = keyedUsers
+        
+        self.configData[str(server.id)]['gateData'] = newGateData
+
     # Private Model Utility Functions
+    def __getGateData(self, serverData):
+        if serverData is not None:
+            return serverData.get('gateData')
+        return None
+
     def __getCommander(self, commanderList,  commanderId):
         if commanderList is not None and len(commanderList) > 0:
             return commanderList.get(commanderId)
@@ -126,6 +160,5 @@ class ConfigManager:
         return None
 
     # Utility Functions
-
     def __formatMemberName(self,  member: discord.Member):
         return member.name + '@#' + member.discriminator

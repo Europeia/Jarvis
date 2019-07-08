@@ -1,9 +1,16 @@
 import discord
+# import logging
 
 from discord.ext import commands
 
 from config import ConfigManager
 from admin import AdministrationCommands
+
+# logger = logging.getLogger('discord')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# logger.addHandler(handler)
 
 description = "J.A.R.V.I.S is an administration helper."
 bot = commands.Bot(command_prefix='!', description=description)
@@ -19,7 +26,7 @@ async def on_ready():
     global configManager
     configManager = ConfigManager()
     updateConfigs()
-    AdministrationCommands(bot,  configManager)
+    bot.add_cog(AdministrationCommands(bot,  configManager))
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -31,6 +38,7 @@ async def on_message(message: discord.Message):
         greeting = configManager.getGreetingMessage(guild)
         if greeting != 'none' :
             await channel.send(greeting.replace('@@NAME@@', author.mention))
+        # Allow Rejoin, yo.
 
     await bot.process_commands(message)
 

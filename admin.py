@@ -370,7 +370,7 @@ class AdministrationCommands(commands.Cog):
             await ctx.send('ERROR! A valid Gate Role must be set before users can be registered.')
             return
         
-        gateData['keyedUsers'][member.id] = forumAccount
+        gateData['keyedUsers'][str(member.id)] = forumAccount
         self.configManager.setGateData(guild, True, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
         self.configManager.writeConfig()
         await ctx.author.add_roles(gateRole, reason='User Registered by ' + ctx.author.name)
@@ -382,6 +382,34 @@ class AdministrationCommands(commands.Cog):
             await ctx.send('Invalid User! Usage: !registerMember <user> <forumID>')
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('ERROR! Usage: !registerMember <user> <forumID>')
+        else:
+            await ctx.send(error.args[0])
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def unregisterMember(self, ctx, member: discord.Member):
+        """Unregisters a Guild Member's forum account and removes the Gate Role"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+
+        if gateData['keyedUsers'][str(member.id)] is not None:
+            del gateData['keyedUsers'][str(member.id)]
+            self.configManager.setGateData(guild, gateData['gateEnabled'], gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+            self.configManager.writeConfig()
+            
+            gateRole = guild.get_role(gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+            if gateRole is not None:
+                await member.remove_roles(gateRole, reason='Unregistered by ' + ctx.author.name)
+            
+        await ctx.send('Unregistered Member ' + member.name + '#' + member.discriminator)
+
+    @unregisterMember.error
+    async def unregisterMember_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid User! Usage: !unregisterMember <user>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !unregisterMember <user>')
         else:
             await ctx.send(error.args[0])
 

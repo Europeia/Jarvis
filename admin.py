@@ -3,32 +3,13 @@ from discord.ext import commands
 
 from config import ConfigManager
 
-
-class AdministrationCommands:
+class AdministrationCommands(commands.Cog):
     bot = None
     configManager = None
 
     def __init__(self, bot, configMgr: ConfigManager):
         self.bot = bot
         self.configManager = configMgr
-
-        commands = list()
-        commands.append(self.addRole)
-        commands.append(self.joinRole)
-        commands.append(self.remRole)
-        commands.append(self.leaveRole)
-        commands.append(self.listJoinableRoles)
-        commands.append(self.addRoleMgr)
-        commands.append(self.remRoleMgr)
-        commands.append(self.toggleJoinableRole)
-        commands.append(self.listRoleData)
-        commands.append(self.getGreetingMessage)
-        commands.append(self.setGreetingMessage)
-        commands.append(self.updateConfig)
-
-        for iCmd in commands:
-            if iCmd not in self.bot.commands:
-                self.bot.add_command(iCmd)
 
     @commands.command()
     @commands.guild_only()
@@ -46,15 +27,18 @@ class AdministrationCommands:
         await member.add_roles(role, reason='Added by ' + ctx.author.name)
         await ctx.send('Added ' + member.name + ' to @' + role.name)
 
+    
     @addRole.error
     async def addRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !addRole <role> <user>')
-                return
             if 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !addRole <role> <user>')
-                return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !addRole <role> <user>')
+        else:
+            await ctx.send(error.args[0])            
 
     @commands.command()
     @commands.guild_only()
@@ -66,12 +50,16 @@ class AdministrationCommands:
         await ctx.author.add_roles(role, reason='Adding to Joinable Role by ' + ctx.author.name)
         await ctx.send('Joined @' + role.name)
 
+    
     @joinRole.error
     async def joinRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !joinRole <role>')
-                return
+            elif isinstance(error, commands.MissingRequiredArgument):
+                await ctx.send('ERROR! Usage: !joinRole <role>')
+        else:
+            await ctx.send(error.args[0])                
 
     @commands.command()
     @commands.guild_only()
@@ -89,15 +77,18 @@ class AdministrationCommands:
         await member.remove_roles(role, reason='Removed by ' + ctx.author.name)
         await ctx.send('Removed ' + member.name + ' from @' + role.name)
 
+    
     @remRole.error
     async def remRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !remRole <role> <user>')
-                return
-            if 'Member ' in error.args[0]:
+            elif 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !remRole <role> <user>')
-                return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !remRole <role> <user>')
+        else:
+            await ctx.send(error.args[0])            
 
     @commands.command()
     @commands.guild_only()
@@ -109,12 +100,16 @@ class AdministrationCommands:
         await ctx.author.remove_roles(role, reason='Leaving a Joinable Role by ' + ctx.author.name)
         await ctx.send('Left @' + role.name)
 
+    
     @leaveRole.error
     async def leaveRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !leaveRole <role>')
-                return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !leaveRole <role>')
+        else:
+            await ctx.send(error.args[0])            
 
     @commands.command()
     @commands.guild_only()
@@ -135,33 +130,32 @@ class AdministrationCommands:
                     output += role.name + '\n'
         await ctx.send(output)
 
-    def is_admin():
-        async def predicate(ctx):
-            return ctx.author.guild_permissions.administrator
-        return commands.check(predicate)
-
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def addRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
         """Adds a RoleManager to a Role: !addRoleMgr <Role> <User>"""
         self.configManager.addCommander(ctx.guild, role, member)
         self.configManager.writeConfig()
         await ctx.send(member.name + ' can now add users to ' + role.name)
 
+    
     @addRoleMgr.error
     async def addRoleMgr_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             if 'Role ' in error.args[0]:
                 await ctx.send('Invalid Role! Usage: !addRoleMgr <role> <user>')
-                return
-            if 'Member ' in error.args[0]:
+            elif 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !addRoleMgr <role> <user>')
-                return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !addRoleMgr <role> <user>')
+        else:
+            await ctx.send(error.args[0])            
+
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def remRoleMgr(self, ctx, role: discord.Role, member: discord.Member):
         """Removes a RoleManager from a Role: !remRoleMgr <Role> <User>"""
         self.configManager.remCommander(ctx.guild, role, member)
@@ -171,16 +165,18 @@ class AdministrationCommands:
     @remRoleMgr.error
     async def remRoleMgr_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
-            if 'Role ' in error.args[0]:
+            if 'Role ' in error.args[0]: 
                 await ctx.send('Invalid Role! Usage: !remRoleMgr <role> <user>')
-                return
-            if 'Member ' in error.args[0]:
+            elif 'Member ' in error.args[0]:
                 await ctx.send('Invalid Member! Usage: !remRoleMgr <role> <user>')
-                return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !remRoleMgr <role> <user>')
+        else:
+            await ctx.send(error.args[0])
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def listRoleData(self, ctx, role: discord.Role):
         """Lists Role Data for a Role: !listRoleData <role>"""
         output = 'Config Data for Role - ' + \
@@ -199,41 +195,202 @@ class AdministrationCommands:
     async def listRoleData_error(self, ctx, error):
         if isinstance(error,  commands.BadArgument):
             await ctx.send('Invalid Role! Usage: !listRoleData <role>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !listRoleData <role>')
+        else:
+            await ctx.send(error.args[0])            
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def toggleJoinableRole(self, ctx, role: discord.Role):
         """Makes a role Joinable by any user"""
         joinable = self.configManager.isJoinableRole(ctx.guild, role)
         self.configManager.setJoinableRole(ctx.guild, role, not joinable)
+        self.configManager.writeConfig()
         await ctx.send('Joinable Group for @' + role.name + ' set to ' + str(not joinable))
 
     @toggleJoinableRole.error
     async def toggleJoinableRole_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
-            await ctx.send('Invalid Role! Usage: !toggleJoinablerole <role>')
+            await ctx.send('Invalid Role! Usage: !toggleJoinableRole <role>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !toggleJoinableRole <role>')
+        else:
+            await ctx.send(error.args[0])            
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def setGreetingMessage(self, ctx, *, greetingMessage: str):
         """Sets the Greeting Message sent to all new members of the Server (set to 'none' to disable)"""
         self.configManager.setGreetingMessage(ctx.guild,  greetingMessage)
+        self.configManager.writeConfig()
         await ctx.send('New Greeting Message Set!')
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
     async def getGreetingMessage(self,  ctx):
         """Shows the Greeting Message sent to all new members of the server (if 'none' no message will be sent)"""
         await ctx.send(self.configManager.getGreetingMessage(ctx.guild))
 
     @commands.command()
     @commands.guild_only()
-    @is_admin()
+    @commands.has_permissions(administrator=True)
+    async def getGateData(self, ctx):
+        """Shows Gate Data for the server"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+        gateRole = guild.get_role(gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+        gateRoleName = gateRole.name if gateRole is not None else 'None'
+
+        output = 'Data for ' + guild.name + ' (' + str(guild.id) + ')\n'
+        output += 'Gate Enabled: ' + str(gateData['gateEnabled']) + '\n'
+        output += 'Gate Role:' + gateRoleName + '\n'
+        output += 'Gate Allows Rejoin: ' + str(gateData['allowRejoin']) + '\n'
+        
+        await ctx.send(output)
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def setGateEnabled(self, ctx, gated: bool):
+        """Sets Gate Enabled for the server"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+        gateRole = guild.get_role(gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+
+        if gated and gateRole is None:
+            await ctx.send('ERROR: Cannot set Gate Enabled when no Gate Role is defined!')
+        else:
+            self.configManager.setGateData(guild, gated, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+            self.configManager.writeConfig()
+            await ctx.send('Gate Enabled Set: ' + str(gated))
+
+    @setGateEnabled.error
+    async def setGateEnabled_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid Entry! Usage: !setGateEnabled <True/False>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !setGateEnabled <true/false>')
+        else:
+            await ctx.send(error.args[0])        
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def setGateRole(self, ctx, role: discord.Role):
+        """Sets the Role granted to Keyed users"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+
+        self.configManager.setGateData(guild, gateData['gateEnabled'], gateData['allowRejoin'], role.id, gateData['keyedUsers'])
+        self.configManager.writeConfig()
+        await ctx.send("Setting Gated Role: @" + role.name)
+
+    @setGateRole.error
+    async def setGateRole_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid Role! Usage: !setGateRole <role>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !setGateRole <role>')
+        else:
+            await ctx.send(error.args[0])            
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def setGateRejoin(self, ctx, rejoin: bool):
+        """Sets Gate Enabled for the server"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+        gateRole = guild.get_role(gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+
+        if rejoin and gateRole is None:
+            await ctx.send('ERROR: Cannot set Gate Rejoin when no Gate Role is defined!')
+        elif rejoin and not gateData['gateEnabled']:
+            await ctx.send('ERROR: Cannot set Gate Rejoin when Gate is not Enabled!')
+        else:
+            self.configManager.setGateData(guild, True, rejoin, gateData['keyRoleId'], gateData['keyedUsers'])
+            self.configManager.writeConfig()
+            await ctx.send('Gate Enabled Set: ' + str(rejoin))
+    
+    @setGateRejoin.error
+    async def setGateRejoin_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid Entry! Usage: !setGateRejoin <True/False>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !setGateRejoin <true/false>')
+        else:
+            await ctx.send(error.args[0])
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def getMemberData(self, ctx, member: discord.Member):
+        """Gets Account Data for a Guild Member"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+
+        output = 'Account Data For User: ' + member.name + '#' + member.discriminator + ' (' + str(member.id) + ')\n'
+        output += 'Server Nickname: ' + member.display_name + '\n'
+
+        forumAcct = gateData['keyedUsers'].get(str(member.id))
+
+        if forumAcct is not None:
+            output += 'Forum Account: https://forums.europeians.com/index.php/members/' + forumAcct
+        
+        await ctx.send(output)
+    
+    @getMemberData.error
+    async def getMemberData_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid User! Usage: !getMemberData <user>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !getMemberData <user>')
+        else:
+            await ctx.send(error.args[0])
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def registerMember(self, ctx, member: discord.Member, forumAccount: str):
+        """Registers a Guild Member's forum account and grants the Gate Role"""
+        guild = ctx.guild
+        gateData = self.configManager.getGateData(guild)
+        
+        if not gateData['gateEnabled']:
+            await ctx.send('ERROR! Gate Enabled must be set to True before users can be registered.')
+            return
+
+        gateRole = guild.get_role(gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+
+        if gateRole is None:
+            await ctx.send('ERROR! A valid Gate Role must be set before users can be registered.')
+            return
+        
+        gateData['keyedUsers'][member.id] = forumAccount
+        self.configManager.setGateData(guild, True, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+        self.configManager.writeConfig()
+        await ctx.author.add_roles(gateRole, reason='User Registered by ' + ctx.author.name)
+        await ctx.send('User ' + str(member.id) + ' registered to forum account: https://forums.europeians.com/index.php/members/' + forumAccount)
+    
+    @registerMember.error
+    async def registerMember_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send('Invalid User! Usage: !registerMember <user> <forumID>')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('ERROR! Usage: !registerMember <user> <forumID>')
+        else:
+            await ctx.send(error.args[0])
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
     async def updateConfig(self,  ctx):
         """Persists Config Data to Disk (performed automatically on shutdown)"""
         self.configManager.updateServerData(ctx.guild)
         self.configManager.writeConfig()
         await ctx.send('Server Data Updated!')
+    

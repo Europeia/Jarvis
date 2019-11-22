@@ -373,7 +373,7 @@ class AdministrationCommands(commands.Cog):
         gateData['keyedUsers'][str(member.id)] = forumAccount
         self.configManager.setGateData(guild, True, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
         self.configManager.writeConfig()
-        await ctx.author.add_roles(gateRole, reason='User Registered by ' + ctx.author.name)
+        await member.add_roles(gateRole, reason='User Registered by ' + ctx.author.name)
         await ctx.send('User ' + str(member.id) + ' registered to forum account: https://forums.europeians.com/index.php/members/' + forumAccount)
     
     @registerMember.error

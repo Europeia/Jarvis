@@ -1,4 +1,5 @@
 import discord
+import asyncio
 # import logging
 
 from discord.ext import commands
@@ -37,6 +38,7 @@ async def on_message(message: discord.Message):
         author = message.author
         greeting = configManager.getGreetingMessage(guild)
         if greeting != 'none' :
+            await asyncio.sleep(3)
             await channel.send(greeting.replace('@@NAME@@', author.mention))
         # Allow Rejoin, yo.
 

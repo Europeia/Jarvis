@@ -4,7 +4,7 @@ import asyncio
 
 from discord.ext import commands
 
-from config import ConfigManager
+from config.file_config import FileConfigManager
 from admin import AdministrationCommands
 
 # logger = logging.getLogger('discord')
@@ -25,7 +25,7 @@ async def on_ready():
     print(bot.user.id)
     print('------ Servers ------')
     global configManager
-    configManager = ConfigManager()
+    configManager = FileConfigManager()
     updateConfigs()
     bot.add_cog(AdministrationCommands(bot,  configManager))
 
@@ -59,14 +59,14 @@ def updateConfigs():
 @commands.is_owner()
 async def shutdown(ctx):
     await ctx.message.author.send('Shutting Down!')
-    await bot.logout()
-    exit()
+    await bot.close()
+    quit()
 
 try:
     f = open('token.txt',  'r')
 except:
     print('Unable to find token.txt!')
-    exit()
+    quit()
 
 token = f.read().strip()
 f.close()

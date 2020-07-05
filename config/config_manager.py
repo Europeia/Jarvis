@@ -145,9 +145,9 @@ class BaseConfigManager(object):
         self.__update_roles_data_from_discord(guild)
         roles: List[int] = []
 
-        for role in self.config_data[guild.id].role_data:
-            if role.can_join:
-                roles.append(role.id)
+        for role_id in self.config_data[guild.id].role_data.keys():
+            if self.config_data[guild.id].role_data[role_id].can_join:
+                roles.append(role_id)
 
         return roles
 

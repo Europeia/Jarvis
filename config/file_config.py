@@ -24,6 +24,14 @@ class ServerGateDataFile(ServerGateData):
 
         return cls(bool(gate_enabled), bool(allow_rejoin), int(key_role_id), keyed_users)
 
+    # def to_json(self):
+    #     obj_json = dict()
+    #     obj_json['allow_rejoin'] = self.allow_rejoin
+    #     obj_json['gate_enabled'] = self.gate_enabled
+    #     obj_json['key_role_id'] = self.key_role_id
+    #     obj_json['keyed_users'] = self.keyed_users
+
+
 
 class ServerRoleDataFile(ServerRoleData):
     @classmethod
@@ -95,7 +103,7 @@ class ObjectEncoder(json.JSONEncoder):
             d = dict(
                 (key, value)
                 for key, value in inspect.getmembers(obj)
-                if not key.startswith("__")
+                if not key.startswith("_")
                 and not inspect.isabstract(value)
                 and not inspect.isbuiltin(value)
                 and not inspect.isfunction(value)
@@ -119,7 +127,7 @@ class FileConfigManager(BaseConfigManager):
         except Exception as ex:
             self.config_data: ConfigData = {}
             raise ex
-            
+
         return
 
     def writeConfig(self):

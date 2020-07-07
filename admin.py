@@ -117,7 +117,7 @@ class AdministrationCommands(commands.Cog):
             for roleId in joinableRoles:
                 role = None
                 for guildRole in ctx.guild.roles:
-                    if guildRole.id == int(roleId):
+                    if guildRole.id == roleId:
                         role = guildRole
                         break
                 if role is not None:
@@ -234,32 +234,30 @@ class AdministrationCommands(commands.Cog):
         """Shows Gate Data for the server"""
         guild = ctx.guild
         gateData = self.configManager.getGateData(guild)
-        gateRole = guild.get_role(
-            gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+        gateRole = guild.get_role(gateData.key_role_id)
         gateRoleName = gateRole.name if gateRole is not None else 'None'
 
         output = 'Data for ' + guild.name + ' (' + str(guild.id) + ')\n'
-        output += 'Gate Enabled: ' + str(gateData['gateEnabled']) + '\n'
+        output += 'Gate Enabled: ' + str(gateData.gate_enabled) + '\n'
         output += 'Gate Role:' + gateRoleName + '\n'
-        output += 'Gate Allows Rejoin: ' + str(gateData['allowRejoin']) + '\n'
+        output += 'Gate Allows Rejoin: ' + str(gateData.allow_rejoin) + '\n'
 
         await ctx.send(output)
 
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def setGateEnabled(self, ctx, gated: bool):
+    async def setGateEnabled(self, ctx: commands.Context, gated: bool):
         """Sets Gate Enabled for the server"""
         guild = ctx.guild
         gateData = self.configManager.getGateData(guild)
-        gateRole = guild.get_role(
-            gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+        gateRole = guild.get_role(gateData.key_role_id)
 
         if gated and gateRole is None:
             await ctx.send('ERROR: Cannot set Gate Enabled when no Gate Role is defined!')
         else:
             self.configManager.setGateData(
-                guild, gated, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+                guild, gated, gateData.allow_rejoin, gateData.key_role_id, gateData.keyed_users)
             self.configManager.writeConfig()
             await ctx.send('Gate Enabled Set: ' + str(gated))
 
@@ -281,7 +279,7 @@ class AdministrationCommands(commands.Cog):
         gateData = self.configManager.getGateData(guild)
 
         self.configManager.setGateData(
-            guild, gateData['gateEnabled'], gateData['allowRejoin'], role.id, gateData['keyedUsers'])
+            guild, gateData.gate_enabled, gateData.allow_rejoin, role.id, gateData.keyed_users)
         self.configManager.writeConfig()
         await ctx.send("Setting Gated Role: @" + role.name)
 
@@ -301,16 +299,15 @@ class AdministrationCommands(commands.Cog):
         """Sets Gate Enabled for the server"""
         guild = ctx.guild
         gateData = self.configManager.getGateData(guild)
-        gateRole = guild.get_role(
-            gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+        gateRole = guild.get_role(gateData.key_role_id)
 
         if rejoin and gateRole is None:
             await ctx.send('ERROR: Cannot set Gate Rejoin when no Gate Role is defined!')
-        elif rejoin and not gateData['gateEnabled']:
+        elif rejoin and not gateData.gate_enabled:
             await ctx.send('ERROR: Cannot set Gate Rejoin when Gate is not Enabled!')
         else:
             self.configManager.setGateData(
-                guild, True, rejoin, gateData['keyRoleId'], gateData['keyedUsers'])
+                guild, True, rejoin, gateData.key_role_id, gateData.keyed_users)
             self.configManager.writeConfig()
             await ctx.send('Gate Enabled Set: ' + str(rejoin))
 
@@ -332,10 +329,11 @@ class AdministrationCommands(commands.Cog):
         gateData = self.configManager.getGateData(guild)
 
         output = 'Account Data For User: ' + member.name + '#' + \
-            member.discriminator + ' (' + str(member.id) + ')\n'
+            member.discriminator + \
+            ' (' + str(member.id) + ') -- ' + member.id + '\n'
         output += 'Server Nickname: ' + member.display_name + '\n'
 
-        forumAcct = gateData['keyedUsers'].get(str(member.id))
+        forumAcct = gateData.keyed_users.get(member.id)
 
         if forumAcct is not None:
             output += 'Forum Account: https://forums.europeians.com/index.php/members/' + forumAcct
@@ -354,28 +352,27 @@ class AdministrationCommands(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def registerMember(self, ctx, member: discord.Member, forumAccount: str):
+    async def registerMember(self, ctx, member: discord.Member, forumAccount: int):
         """Registers a Guild Member's forum account and grants the Gate Role"""
         guild = ctx.guild
         gateData = self.configManager.getGateData(guild)
 
-        if not gateData['gateEnabled']:
+        if not gateData.gate_enabled:
             await ctx.send('ERROR! Gate Enabled must be set to True before users can be registered.')
             return
 
-        gateRole = guild.get_role(
-            gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+        gateRole = guild.get_role(gateData.key_role_id)
 
         if gateRole is None:
             await ctx.send('ERROR! A valid Gate Role must be set before users can be registered.')
             return
 
-        gateData['keyedUsers'][str(member.id)] = forumAccount
+        gateData.keyed_users[member.id] = forumAccount
         self.configManager.setGateData(
-            guild, True, gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+            guild, True, gateData.allow_rejoin, gateData.key_role_id, gateData.keyed_users)
         self.configManager.writeConfig()
         await member.add_roles(gateRole, reason='User Registered by ' + ctx.author.name)
-        await ctx.send('User ' + str(member.id) + ' registered to forum account: https://forums.europeians.com/index.php/members/' + forumAccount)
+        await ctx.send('User ' + str(member.id) + ' registered to forum account: https://forums.europeians.com/index.php/members/' + str(forumAccount))
 
     @registerMember.error
     async def registerMember_error(self, ctx, error):
@@ -394,14 +391,13 @@ class AdministrationCommands(commands.Cog):
         guild = ctx.guild
         gateData = self.configManager.getGateData(guild)
 
-        if gateData['keyedUsers'][str(member.id)] is not None:
-            del gateData['keyedUsers'][str(member.id)]
+        if gateData.keyed_users[member.id] is not None:
+            del gateData.keyed_users[member.id]
             self.configManager.setGateData(
-                guild, gateData['gateEnabled'], gateData['allowRejoin'], gateData['keyRoleId'], gateData['keyedUsers'])
+                guild, gateData.gate_enabled, gateData.allow_rejoin, gateData.key_role_id, gateData.keyed_users)
             self.configManager.writeConfig()
 
-            gateRole = guild.get_role(
-                gateData['keyRoleId']) if gateData['keyRoleId'] != '' else None
+            gateRole = guild.get_role(gateData.key_role_id)
             if gateRole is not None:
                 await member.remove_roles(gateRole, reason='Unregistered by ' + ctx.author.name)
 

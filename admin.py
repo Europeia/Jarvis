@@ -329,8 +329,7 @@ class AdministrationCommands(commands.Cog):
         gateData = self.configManager.getGateData(guild)
 
         output = 'Account Data For User: ' + member.name + '#' + \
-            member.discriminator + \
-            ' (' + str(member.id) + ') -- ' + member.id + '\n'
+            member.discriminator + ' (' + str(member.id) + ')\n'
         output += 'Server Nickname: ' + member.display_name + '\n'
 
         forumAcct = gateData.keyed_users.get(member.id)

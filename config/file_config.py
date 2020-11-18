@@ -32,7 +32,6 @@ class ServerGateDataFile(ServerGateData):
     #     obj_json['keyed_users'] = self.keyed_users
 
 
-
 class ServerRoleDataFile(ServerRoleData):
     @classmethod
     def from_json(cls, id: int, data: dict):
@@ -120,17 +119,16 @@ class ObjectEncoder(json.JSONEncoder):
 class FileConfigManager(BaseConfigManager):
     def readConfig(self):
         try:
-            f = open('data/config.json')
+            f = open('data/config.json', 'w+')
             servers = ServerDataFile.from_json_list(json.load(f))
             self.config_data: ConfigData = {
                 server_id: servers[server_id] for server_id in servers.keys()}
         except Exception as ex:
             self.config_data: ConfigData = {}
-            raise ex
 
         return
 
     def writeConfig(self):
-        f = open('data/config.json',  'w')
+        f = open('data/config.json',  'w+')
 
         json.dump(self.config_data, f, cls=ObjectEncoder, indent=2)

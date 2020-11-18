@@ -161,7 +161,7 @@ class BaseConfigManager(object):
         else:
             return ServerGateData()
 
-    def setGateData(self, guild: discord.Guild, gateEnabled: bool, allowRejoin: bool, keyRoleId: str, keyedUsers: {}):
+    def setGateData(self, guild: discord.Guild, gateEnabled: bool, allowRejoin: bool, keyRoleId: str, keyedUsers: Dict[int, int]):
         server_data = self.config_data[guild.id] if self.config_data[guild.id] is not None else ServerData.from_discord_guild(
             guild)
 

@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from discord import message
 # import logging
 
 from discord.ext import commands
@@ -13,8 +14,11 @@ from admin import AdministrationCommands
 # handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 # logger.addHandler(handler)
 
+intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
 description = "J.A.R.V.I.S is an administration helper."
-bot = commands.Bot(command_prefix='!', description=description)
+bot = commands.Bot(command_prefix='!', description=description, intents=intents)
 configManager = None
 
 

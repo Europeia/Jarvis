@@ -1,4 +1,4 @@
 {
   "python.pythonPath": "env/bin/python3",
-  "python.languageServer": "Microsoft"
+  "python.languageServer": "Pylance"
 }

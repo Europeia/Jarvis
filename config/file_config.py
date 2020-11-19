@@ -1,5 +1,6 @@
 import inspect
 import json
+from os import getcwd, path
 from typing import Dict, List
 
 from .config_manager import BaseConfigManager
@@ -19,9 +20,15 @@ class ServerGateDataFile(ServerGateData):
             "keyRoleId") is not None else data.get("key_role_id")
         if key_role_id == "" or key_role_id is None:
             key_role_id = "0"
-        keyed_users: Dict[str, str] = data["keyedUsers"] if data.get(
-            "keyedUsers") is not None else data.get("keyed_users")
-
+        
+        keyed_users: Dict[str, str] = dict()
+        if data.get("keyedUser") is not None:
+            keyed_users = data["keyedUsers"]
+        elif data.get("keyed_users") is not None:
+            keyed_users_raw = data.get("keyed_users")
+            for key in keyed_users_raw:
+                keyed_users[str(key)] = str(keyed_users_raw[key])
+        
         return cls(bool(gate_enabled), bool(allow_rejoin), int(key_role_id), keyed_users)
 
     # def to_json(self):
@@ -119,7 +126,9 @@ class ObjectEncoder(json.JSONEncoder):
 class FileConfigManager(BaseConfigManager):
     def readConfig(self):
         try:
-            f = open('data/config.json', 'w+')
+            print(getcwd())
+            f = open('data/config.json', 'r')
+            print(path.realpath(f.name))
             servers = ServerDataFile.from_json_list(json.load(f))
             self.config_data: ConfigData = {
                 server_id: servers[server_id] for server_id in servers.keys()}
@@ -129,6 +138,6 @@ class FileConfigManager(BaseConfigManager):
         return
 
     def writeConfig(self):
-        f = open('data/config.json',  'w+')
+        f = open('data/config.json',  'w')
 
         json.dump(self.config_data, f, cls=ObjectEncoder, indent=2)

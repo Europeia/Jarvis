@@ -5,60 +5,42 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File (Integrated Terminal)",
-            "type": "python",
+            "type": "lldb",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Jarvis (Integrated Terminal)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/jarvis.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Attach",
-            "type": "python",
-            "request": "attach",
-            "port": 5678,
-            "host": "localhost"
-        },
-        {
-            "name": "Python: Django",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "console": "integratedTerminal",
-            "args": [
-                "runserver",
-                "--noreload",
-                "--nothreading"
-            ],
-            "django": true
-        },
-        {
-            "name": "Python: Flask",
-            "type": "python",
-            "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "app.py"
+            "name": "Debug executable 'jarvis'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=jarvis",
+                    "--package=jarvis"
+                ],
+                "filter": {
+                    "name": "jarvis",
+                    "kind": "bin"
+                }
             },
-            "args": [
-                "run",
-                "--no-debugger",
-                "--no-reload"
-            ],
-            "jinja": true
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceRoot}/target/debug/jarvis"
         },
         {
-            "name": "Python: Current File (External Terminal)",
-            "type": "python",
+            "type": "lldb",
             "request": "launch",
-            "program": "${file}",
-            "console": "externalTerminal"
+            "name": "Debug unit tests in executable 'jarvis'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=jarvis",
+                    "--package=jarvis"
+                ],
+                "filter": {
+                    "name": "jarvis",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

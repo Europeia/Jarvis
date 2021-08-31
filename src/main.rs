@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate simple_error;
 
+use lazy_static::lazy_static;
 use serenity::{
     async_trait,
     model::{
@@ -16,12 +17,15 @@ use serenity::{
     },
     prelude::*,
 };
-use std::env;
+use std::sync::Mutex;
 
 mod config;
 mod db;
+use db::mysql::MySqlManager;
 
-const SQL_INSTANCE: db::mysql::MySqlManager = db::mysql::MySqlManager::new();
+lazy_static! {
+    static ref SQL_INSTANCE: Mutex<MySqlManager> = Mutex::new(MySqlManager::new());
+}
 
 struct Handler;
 
@@ -145,21 +149,20 @@ impl EventHandler for Handler {
 async fn main() {
     let config = config::get_config().expect("Unable to get config file");
     SQL_INSTANCE
+        .lock()
+        .unwrap()
         .init(config.mysql)
         .expect("Cannot initialize connection to database");
 
     SQL_INSTANCE
+        .lock()
+        .unwrap()
         .get_connection()
         .expect("Unable to get connection to database");
 
-    let application_id: u64 = env::var("APPLICATION_ID")
-        .expect("Expected an application id in the environment")
-        .parse()
-        .expect("applicationid is not a valid id");
-
     let mut client = Client::builder(&config.token)
         .event_handler(Handler)
-        .application_id(application_id)
+        .application_id(config.application_id)
         .await
         .expect("Error creating client");
 

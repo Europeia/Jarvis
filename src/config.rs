@@ -12,6 +12,7 @@ pub struct SQLConfig {
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub token: String,
+    pub application_id: u64,
     pub mysql: SQLConfig,
 }
 

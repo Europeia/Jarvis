@@ -34,6 +34,7 @@ impl MySqlManager {
             .pass(Some(new_config.pw));
         let pool = Pool::new(opts);
         self.pool = Some(pool.expect("Unable to connect to database!"));
+        self.initialized = true;
 
         return Ok(());
     }

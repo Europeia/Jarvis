@@ -4,3 +4,4 @@ mysql:
   pw: dbPassword
   db: dbName
 token: botOAuthToken
+application_id: applicationId for bot

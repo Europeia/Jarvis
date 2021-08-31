@@ -1,0 +1,6 @@
+mysql: 
+  host: dbHost (localhost)
+  user: dbUser
+  pw: dbPassword
+  db: dbName
+token: botOAuthToken

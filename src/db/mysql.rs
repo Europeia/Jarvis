@@ -1,7 +1,13 @@
 use crate::config;
+use lazy_static::lazy_static;
 use mysql::*;
 use std::error::Error;
 use std::result::Result;
+use std::sync::Mutex;
+
+lazy_static! {
+    pub static ref SQL_INSTANCE: Mutex<MySqlManager> = Mutex::new(MySqlManager::new());
+}
 
 pub struct MySqlManager {
     initialized: bool,

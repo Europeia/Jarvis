@@ -1,7 +1,10 @@
+use serenity::model::id::*;
+
 pub struct Guild {
     id: GuildId,
-    welcome_message: String;
-    gate_data: GateData;
+    welcome_message: String,
+    gate_data: GateData,
+    role_data: ManagedRoleData[]
 }
 
 pub struct GateData {
@@ -20,4 +23,17 @@ pub struct KeyedUser {
     user_id: u64,
     foreign_id: String,
     foreign_id_type: i32,
+}
+
+pub struct ManagedRoleData {
+    id: u64,
+    can_join: bool,
+    name: String,
+    commanders: UserId[]
+}
+
+pub impl Guild {
+    save()-> Result<(), Box<dyn Error>>{
+        
+    }
 }

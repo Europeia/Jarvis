@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate simple_error;
 
-use lazy_static::lazy_static;
 use serenity::{
     async_trait,
     model::{
@@ -17,15 +16,9 @@ use serenity::{
     },
     prelude::*,
 };
-use std::sync::Mutex;
 
 mod config;
 mod db;
-use db::mysql::MySqlManager;
-
-lazy_static! {
-    static ref SQL_INSTANCE: Mutex<MySqlManager> = Mutex::new(MySqlManager::new());
-}
 
 struct Handler;
 
@@ -148,13 +141,13 @@ impl EventHandler for Handler {
 #[allow(const_item_mutation)]
 async fn main() {
     let config = config::get_config().expect("Unable to get config file");
-    SQL_INSTANCE
+    db::mysql::SQL_INSTANCE
         .lock()
         .unwrap()
         .init(config.mysql)
         .expect("Cannot initialize connection to database");
 
-    SQL_INSTANCE
+    db::mysql::SQL_INSTANCE
         .lock()
         .unwrap()
         .get_connection()

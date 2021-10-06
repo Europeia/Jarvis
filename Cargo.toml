@@ -6,9 +6,11 @@ edition = "2018"
 [dependencies]
 serenity = { version = "*", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
 tokio = { version = "1.0", features = ["full"] }
+sqlx = { version="*", features = ["mysql", "runtime-tokio-rustls", "macros"] }
 serde_yaml = "*"
 serde = "*"
 mysql = "*"
 fstrings = "*"
 simple-error = "*"
 lazy_static = "*"
+futures = "*"

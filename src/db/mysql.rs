@@ -1,6 +1,7 @@
 use crate::config;
 use lazy_static::lazy_static;
-use mysql::*;
+use sqlx::mysql::*;
+use sqlx::pool::PoolConnection;
 use std::error::Error;
 use std::result::Result;
 use std::sync::Mutex;
@@ -10,9 +11,9 @@ lazy_static! {
 }
 
 pub struct MySqlManager {
-    initialized: bool,
-    config: Option<config::SQLConfig>,
-    pool: Option<Pool>,
+    pub initialized: bool,
+    pub config: Option<MySqlConnectOptions>,
+    pub pool: Option<MySqlPool>,
 }
 
 impl MySqlManager {
@@ -29,29 +30,27 @@ impl MySqlManager {
             bail!("Already Initialized!")
         }
 
-        let new_config = config.clone();
+        self.config = Some(
+            MySqlConnectOptions::new()
+                .username(&config.user)
+                .password(&config.pw)
+                .host(&config.host)
+                .database(&config.db),
+        );
 
-        self.config = Some(config);
-
-        let opts = OptsBuilder::new()
-            .user(Some(new_config.user))
-            .db_name(Some(new_config.db))
-            .ip_or_hostname(Some(new_config.host))
-            .pass(Some(new_config.pw));
-        let pool = Pool::new(opts);
-        self.pool = Some(pool.expect("Unable to connect to database!"));
+        self.pool = Some(MySqlPool::connect_lazy_with(self.config.clone().unwrap()));
         self.initialized = true;
 
         return Ok(());
     }
 
-    pub fn get_connection(&self) -> Result<PooledConn, Box<dyn Error>> {
+    pub fn get_connection(&self) -> Result<PoolConnection<MySql>, Box<dyn Error>> {
         if !self.initialized {
             bail!("Not yet Initialized!");
         }
 
-        let pool = self.pool.clone().expect("Pool not yet initialized");
+        let conn = futures::executor::block_on(self.pool.clone().unwrap().acquire());
 
-        return Ok(pool.get_conn().expect("Unable to get connection!"));
+        return Ok(conn.unwrap());
     }
 }

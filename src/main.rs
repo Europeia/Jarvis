@@ -19,6 +19,7 @@ use serenity::{
 
 mod config;
 mod db;
+mod model;
 
 struct Handler;
 
@@ -141,6 +142,7 @@ impl EventHandler for Handler {
 #[allow(const_item_mutation)]
 async fn main() {
     let config = config::get_config().expect("Unable to get config file");
+
     db::mysql::SQL_INSTANCE
         .lock()
         .unwrap()

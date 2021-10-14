@@ -16,11 +16,12 @@ CREATE TABLE `guild` (
 );
 
 CREATE TABLE `keyed_users` (
-  `guild_id` bigint DEFAULT NULL,
-  `user_id` bigint DEFAULT NULL,
+  `guild_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
   `foreign_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `foreign_id_type` int DEFAULT NULL
-);
+  `foreign_id_type` int DEFAULT NULL,
+  PRIMARY KEY (`guild_id`,`user_id`)
+)
 
 CREATE TABLE `role` (
   `role_id` bigint NOT NULL,

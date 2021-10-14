@@ -1,16 +1,19 @@
 #[macro_use]
 extern crate simple_error;
 
+use std::env;
+use std::fs::*;
+use std::io::Read;
+
+use model::guild::*;
+
 use serenity::{
     async_trait,
     model::{
         gateway::Ready,
         id::GuildId,
         interactions::{
-            application_command::{
-                ApplicationCommand, ApplicationCommandInteractionDataOptionValue,
-                ApplicationCommandOptionType,
-            },
+            application_command::{ApplicationCommand, ApplicationCommandInteractionDataOptionValue, ApplicationCommandOptionType},
             Interaction, InteractionResponseType,
         },
     },
@@ -20,6 +23,8 @@ use serenity::{
 mod config;
 mod db;
 mod model;
+
+use db::mysql::SQL_INSTANCE;
 
 struct Handler;
 
@@ -39,9 +44,7 @@ impl EventHandler for Handler {
                         .as_ref()
                         .expect("Expected user object");
 
-                    if let ApplicationCommandInteractionDataOptionValue::User(user, _member) =
-                        options
-                    {
+                    if let ApplicationCommandInteractionDataOptionValue::User(user, _member) = options {
                         format!("{}'s id is {}", user.tag(), user.id)
                     } else {
                         "Please provide a valid user".to_string()
@@ -68,20 +71,15 @@ impl EventHandler for Handler {
 
         let commands = ApplicationCommand::set_global_application_commands(&ctx.http, |commands| {
             commands
+                .create_application_command(|command| command.name("ping").description("A ping command"))
                 .create_application_command(|command| {
-                    command.name("ping").description("A ping command")
-                })
-                .create_application_command(|command| {
-                    command
-                        .name("id")
-                        .description("Get a user id")
-                        .create_option(|option| {
-                            option
-                                .name("id")
-                                .description("The user to lookup")
-                                .kind(ApplicationCommandOptionType::User)
-                                .required(true)
-                        })
+                    command.name("id").description("Get a user id").create_option(|option| {
+                        option
+                            .name("id")
+                            .description("The user to lookup")
+                            .kind(ApplicationCommandOptionType::User)
+                            .required(true)
+                    })
                 })
                 .create_application_command(|command| {
                     command
@@ -100,68 +98,89 @@ impl EventHandler for Handler {
                                 .description("The message to send")
                                 .kind(ApplicationCommandOptionType::String)
                                 .required(true)
-                                .add_string_choice(
-                                    "Welcome to our cool server! Ask me if you need help",
-                                    "pizza",
-                                )
+                                .add_string_choice("Welcome to our cool server! Ask me if you need help", "pizza")
                                 .add_string_choice("Hey, do you want a coffee?", "coffee")
-                                .add_string_choice(
-                                    "Welcome to the club, you're now a good person. Well, I hope.",
-                                    "club",
-                                )
-                                .add_string_choice(
-                                    "I hope that you brought a controller to play together!",
-                                    "game",
-                                )
+                                .add_string_choice("Welcome to the club, you're now a good person. Well, I hope.", "club")
+                                .add_string_choice("I hope that you brought a controller to play together!", "game")
                         })
                 })
         })
         .await;
 
-        println!(
-            "I now have the following global slash commands: {:#?}",
-            commands
-        );
+        println!("I now have the following global slash commands: {:#?}", commands);
 
         let guild_command = GuildId(123456789)
             .create_application_command(&ctx.http, |command| {
-                command
-                    .name("wonderful_command")
-                    .description("An amazing command")
+                command.name("wonderful_command").description("An amazing command")
             })
             .await;
 
-        println!(
-            "I created the following guild command: {:#?}",
-            guild_command
-        );
+        println!("I created the following guild command: {:#?}", guild_command);
     }
 }
 
 #[tokio::main]
 #[allow(const_item_mutation)]
 async fn main() {
-    let config = config::get_config().expect("Unable to get config file");
+    let args: Vec<String> = env::args().collect();
 
-    db::mysql::SQL_INSTANCE
-        .lock()
-        .unwrap()
-        .init(config.mysql)
-        .expect("Cannot initialize connection to database");
+    println!("Checking Database Connectivity...");
+    let config_result = config::get_config();
+    if config_result.is_err() {
+        println!("Unable to get config file");
+        return;
+    }
 
-    db::mysql::SQL_INSTANCE
-        .lock()
-        .unwrap()
-        .get_connection()
-        .expect("Unable to get connection to database");
+    let config = config_result.unwrap();
 
-    let mut client = Client::builder(&config.token)
+    if SQL_INSTANCE.lock().unwrap().init(config.mysql).is_err() {
+        println!("Cannot initialize connection to database");
+        return;
+    }
+
+    if SQL_INSTANCE.lock().unwrap().get_connection().is_err() {
+        println!("Unable to get connection to database");
+        return;
+    }
+
+    let import_position = args.iter().position(|a| a == "-i");
+    if !import_position.is_none() {
+        let file_position = import_position.unwrap() + 1;
+        let file_name_opt = args.get(file_position);
+        if file_name_opt.is_none() {
+            println!("Missing file name!  Usage: jarvis -i <filename>");
+            return;
+        }
+
+        let file_name = file_name_opt.unwrap();
+
+        let mut buffer = String::new();
+        let f = File::open(file_name);
+        if f.is_err() {
+            println!("Invalid File: {}", file_name);
+            return;
+        }
+
+        if f.unwrap().read_to_string(&mut buffer).is_err() {
+            println!("Unable to read file - {}", file_name);
+            return;
+        }
+
+        let _ = save_guilds(&buffer).await;
+        // We don't want to connect. Import and finish.
+        return;
+    }
+
+    let client = Client::builder(&config.token)
         .event_handler(Handler)
         .application_id(config.application_id)
-        .await
-        .expect("Error creating client");
+        .await;
+    if client.is_err() {
+        println!("Error creating client - {:?}", client.err().unwrap());
+        return;
+    }
 
-    if let Err(why) = client.start().await {
+    if let Err(why) = client.unwrap().start().await {
         print!("Client error: {:?}", why)
     }
 }

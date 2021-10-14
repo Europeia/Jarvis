@@ -31,7 +31,7 @@ CREATE TABLE `role` (
   PRIMARY KEY (`role_id`)
 );
 
-CREATE TABLE `role_commander` (
+CREATE TABLE `role_commanders` (
   `role_id` bigint DEFAULT NULL,
   `user_id` bigint DEFAULT NULL
 )

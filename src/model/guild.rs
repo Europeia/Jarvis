@@ -1,7 +1,7 @@
 use crate::db::mysql::SQL_INSTANCE;
 use serenity::model::id::*;
-use sqlx::MySql;
-use std::error::Error;
+use sqlx::{Executor, MySql};
+use std::{error::Error, os::unix::prelude::CommandExt};
 
 pub struct Guild {
     pub id: GuildId,
@@ -39,10 +39,9 @@ impl Guild {
     pub async fn save(&self) -> Result<(), Box<dyn Error>> {
         let id = self.id.as_u64();
         let welcome_message = self.welcome_message.clone();
-        let query_str = "INSERT guild(id, welcome_message) values(?, ?) ON DUPLICATE KEY UPDATE id=values(id),welcome_message=values(welcome_message);";
-        let query = sqlx::query::<MySql>(query_str)
-            .bind(id)
-            .bind(welcome_message);
+        let query_str =
+            "INSERT guild(id, welcome_message) values(?, ?) ON DUPLICATE KEY UPDATE id=values(id),welcome_message=values(welcome_message);";
+        let query = sqlx::query::<MySql>(query_str).bind(id).bind(welcome_message);
 
         let pool = SQL_INSTANCE.lock().unwrap().pool.clone().unwrap();
 
@@ -60,10 +59,10 @@ impl Guild {
 
 impl GateData {
     pub async fn save(&self, guild_id: GuildId) -> Result<(), Box<dyn Error>> {
-        let mut query_str = String::from(
-            "INSERT guild(id, allow_rejoin, gate_enabled, key_role_id) values(?, ?, ?, ?) ",
+        let mut query_str = String::from("INSERT guild(id, allow_rejoin, gate_enabled, key_role_id) values(?, ?, ?, ?) ");
+        query_str.push_str(
+            "ON DUPLICATE KEY UPDATE allow_rejoin=values(allow_rejoin),gate_enabled=values(gate_enabled),key_role_id=values(key_role_id)",
         );
-        query_str.push_str("ON DUPLICATE KEY UPDATE allow_rejoin=values(allow_rejoin),gate_enabled=values(gate_enabled),key_role_id=values(key_role_id)");
 
         let query = sqlx::query::<MySql>(&query_str)
             .bind(guild_id.as_u64())
@@ -75,6 +74,10 @@ impl GateData {
 
         query.execute(&pool).await?;
 
+        let delete_keyed_users_str: String = String::from("DELETE FROM keyed_users WHERE guild_id=?");
+        let delete_query = sqlx::query::<MySql>(&delete_keyed_users_str).bind(guild_id.as_u64());
+        delete_query.execute(&pool).await?;
+
         for ku in &self.keyed_users {
             ku.save(guild_id).await?;
         }
@@ -85,8 +88,7 @@ impl GateData {
 
 impl RoleData {
     pub async fn save(&self, guild_id: GuildId) -> Result<(), Box<dyn Error>> {
-        let mut query_str =
-            String::from("INSERT role(role_id, guild_id, can_join, name) values(?, ?, ?, ?)");
+        let mut query_str = String::from("INSERT role(role_id, guild_id, can_join, name) values(?, ?, ?, ?)");
         query_str.push_str("ON DUPLICATE KEY UPDATE guild_id=values(guild_id),can_join=values(can_join),name=values(name);");
 
         let query = sqlx::query::<MySql>(&query_str)
@@ -99,6 +101,21 @@ impl RoleData {
 
         query.execute(&pool).await?;
 
+        let delete_comm_str: String = String::from("DELETE FROM role_commanders WHERE role_id=?");
+        let delete_query = sqlx::query::<MySql>(&delete_comm_str).bind(self.id.as_u64());
+        delete_query.execute(&pool).await?;
+
+        if self.commanders.len() > 0 {
+            let mut comm_query_str = String::from("INSERT role_commanders(role_id, user_id) VALUES");
+            let mut values: Vec<String> = Vec::<String>::new();
+            for uid in self.commanders.iter() {
+                values.push(format!("({}, {})", self.id.as_u64(), uid.as_u64()));
+            }
+            comm_query_str.push_str(&values.join(", ").to_string());
+
+            let comm_query = sqlx::query::<MySql>(&comm_query_str);
+            comm_query.execute(&pool).await?;
+        }
         return Ok(());
     }
 }
@@ -125,7 +142,7 @@ impl KeyedUser {
 pub async fn save_guilds(buffer: &String) -> Result<(), Box<dyn std::error::Error>> {
     let mut json: serde_json::Value = serde_json::from_str(&buffer).expect("JSON was not well-formatted");
     if !json.is_object() {
-        print!("{}", &buffer);
+        println!("{}", &buffer);
         bail!("Json object not found!")
     }
 
@@ -189,9 +206,9 @@ pub async fn save_guilds(buffer: &String) -> Result<(), Box<dyn std::error::Erro
 
         let result = guild.save().await;
         if result.is_err() {
-            print!("Error Saving Guild! {:?}", &result);
+            println!("Error Saving Guild! {:?}", &result);
         } else {
-            print!("Saved Guild: {}", id);
+            println!("Saved Guild: {}", id);
         }
     }
 

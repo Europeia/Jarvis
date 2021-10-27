@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-serenity = { version = "*", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
+serenity = { version = "*", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api", "cache"] }
 tokio = { version = "1.0", features = ["full"] }
-sqlx = { version="*", features = ["mysql", "runtime-tokio-rustls", "macros"] }
+sqlx = { version="*", features = ["mysql", "runtime-tokio-rustls"] }
 serde = "*"
 serde_yaml = "*"
 serde_json = "*"

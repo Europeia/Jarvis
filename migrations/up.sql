@@ -7,31 +7,31 @@ CREATE TABLE `foreign_id_type` (
 );
 
 CREATE TABLE `guild` (
-  `id` bigint NOT NULL,
+  `id` bigint unsigned NOT NULL,
   `welcome_message` text,
   `allow_rejoin` bit(1) DEFAULT b'0',
   `gate_enabled` bit(1) DEFAULT b'0',
-  `key_role_id` bigint DEFAULT NULL,
+  `key_role_id` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `keyed_users` (
-  `guild_id` bigint NOT NULL,
-  `user_id` bigint NOT NULL,
+  `guild_id` bigint unsigned NOT NULL,
+  `user_id` bigint unsigned NOT NULL,
   `foreign_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `foreign_id_type` int DEFAULT NULL,
   PRIMARY KEY (`guild_id`,`user_id`)
 )
 
 CREATE TABLE `role` (
-  `role_id` bigint NOT NULL,
-  `guild_id` bigint NOT NULL,
+  `role_id` bigint unsigned NOT NULL,
+  `guild_id` bigint unsigned NOT NULL,
   `can_join` bit(1) DEFAULT b'0',
   `name` text,
   PRIMARY KEY (`role_id`)
 );
 
 CREATE TABLE `role_commanders` (
-  `role_id` bigint DEFAULT NULL,
-  `user_id` bigint DEFAULT NULL
+  `role_id` bigint unsigned DEFAULT NULL,
+  `user_id` bigint unsigned DEFAULT NULL
 )

@@ -9,6 +9,7 @@ use model::guild::*;
 
 use serenity::{
     async_trait,
+    client::*,
     model::{
         gateway::Ready,
         id::GuildId,
@@ -17,7 +18,6 @@ use serenity::{
             Interaction, InteractionResponseType,
         },
     },
-    prelude::*,
 };
 
 mod config;
@@ -109,7 +109,15 @@ impl EventHandler for Handler {
 
         println!("I now have the following global slash commands: {:#?}", commands);
 
-        let guild_command = GuildId(123456789)
+        for guild_id in ctx.cache.guilds().await.iter() {
+            println!("Fetching data for {}", guild_id.as_u64());
+            let guild = ctx.cache.guild(guild_id).await.unwrap();
+            let new_guild = Guild::new(Some(&guild), Some(true)).await;
+            println!("Found data for {}:", guild_id.as_u64().clone());
+            println!("{:?}", new_guild);
+        }
+
+        let guild_command = GuildId(129372441083379712)
             .create_application_command(&ctx.http, |command| {
                 command.name("wonderful_command").description("An amazing command")
             })
@@ -166,7 +174,7 @@ async fn main() {
             return;
         }
 
-        let _ = save_guilds(&buffer).await;
+        let _ = import_guilds_from_file(&buffer).await;
         // We don't want to connect. Import and finish.
         return;
     }
@@ -181,6 +189,6 @@ async fn main() {
     }
 
     if let Err(why) = client.unwrap().start().await {
-        print!("Client error: {:?}", why)
+        print!("Client error: {:?}", why);
     }
 }
